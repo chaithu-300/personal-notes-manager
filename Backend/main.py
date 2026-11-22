@@ -1,14 +1,12 @@
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException,Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 
 import functions
 
 app = FastAPI()
 
-security = HTTPBearer(auto_error=False)
 
 
 # Allow React frontend to connect
@@ -47,13 +45,12 @@ class NoteRequest(BaseModel):
 
 
 # Get logged-in user's ID
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)):
-    if credentials is None:
-        raise HTTPException(status_code=401,detail="Authentication required")
-    user_id = functions.verify_token(credentials.credentials)
+def get_current_user(token: str):
+    if not token:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    user_id = functions.verify_token(token)
     if user_id is False:
-        raise HTTPException(status_code=401,detail="Invalid or expired access token")
+        raise HTTPException(status_code=401, detail="Invalid or expired access token")
     return user_id
 
 
@@ -78,9 +75,7 @@ def register(data: RegisterRequest):
 #  Login user
 @app.post("/login")
 def login(data: LoginRequest):
-
     result = functions.verify_login(data.email,data.password)
-
     if result is False:
         raise HTTPException(status_code=401,detail="Incorrect email or password")
     return result
@@ -99,17 +94,17 @@ def refresh_token(data: RefreshRequest):
 
 # E1 - Get logged-in user's notes
 @app.get("/notes")
-def get_notes(user_id: int = Depends(get_current_user)):
+def get_notes(token: str = Header(None)):
+    user_id = get_current_user(token)
     notes = functions.get_user_notes(user_id)
     return notes
 
 
 # E2 - Create a new note
 @app.post("/notes", status_code=201)
-def add_note(
-    data: NoteRequest,
-    user_id: int = Depends(get_current_user)):
+def add_note(data: NoteRequest, token: str = Header(None)):
+    user_id = get_current_user(token)
     if not data.title.strip() or not data.content.strip():
-        raise HTTPException(status_code=422,detail="Title and content cannot be empty")
-    result = functions.create_note(user_id,data.title,data.content)
+        raise HTTPException(status_code=422, detail="Title and content cannot be empty")
+    result = functions.create_note(user_id, data.title, data.content)
     return result

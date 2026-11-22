@@ -38,6 +38,8 @@ class Note(Base):
     content = Column(String)
     created_at = Column(DateTime, default=datetime.now)
 
+Base.metadata.create_all(engine)
+
 
 def register_user(username, email, password):
     session = Session(engine)
