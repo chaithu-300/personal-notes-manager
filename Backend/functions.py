@@ -8,7 +8,7 @@ from argon2.exceptions import VerifyMismatchError #pyright: ignore
 
 ph = PasswordHasher()
 
-DB_URL = "sqlite:////app/data/notes.db"
+DB_URL = "sqlite:///./notes.db"
 engine = create_engine(DB_URL)
 Base = declarative_base()
 
@@ -79,7 +79,7 @@ def verify_login(email, password):
         return False
 
     try:
-        ph.verify(user.hashed_password, password)
+        ph.verify(str(user.hashed_password), password)
     except VerifyMismatchError:
         session.close()
         return False
