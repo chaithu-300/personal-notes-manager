@@ -1,6 +1,6 @@
 
-from fastapi import FastAPI, HTTPException,Header
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException,Header #pyright: ignore
+from fastapi.middleware.cors import CORSMiddleware #pyright: ignore
 from pydantic import BaseModel, EmailStr
 
 import functions
