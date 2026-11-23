@@ -104,7 +104,8 @@ The application must provide APIs for the following. Fill in the API contract fo
 | 5 | create new notes |POST | /notes|None | access_token|None | 200, 422|
 
 
-| # | Table | 
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| User | id, username, email, hashed_password, created_at | 
-| Notes | id, user_id, title, content, created_at | 
+
+| # | Table | Columns |
+| --- | --- | --- |
+| 1 | User | `id`, `username`, `email`, `hashed_password`, `created_at` |
+| 2 | Notes | `id`, `user_id`, `title`, `content`, `created_at` |
