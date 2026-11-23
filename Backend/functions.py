@@ -1,4 +1,4 @@
-
+import os
 from datetime import datetime, timedelta
 from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, create_engine #pyright: ignore
 from sqlalchemy.orm import Session, declarative_base #pyright: ignore
@@ -8,7 +8,8 @@ from argon2.exceptions import VerifyMismatchError #pyright: ignore
 
 ph = PasswordHasher()
 
-DB_URL = "sqlite:///./notes.db"
+
+DB_URL = os.getenv("DB_URL", "sqlite:///./notes.db")
 engine = create_engine(DB_URL)
 Base = declarative_base()
 

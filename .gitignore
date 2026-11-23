@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Environment variables
+.env
+
+# Frontend dependencies and builds
+node_modules/
+dist/
+
+# Editor files
+.vscode/
+.idea/
+Backend/notes.db

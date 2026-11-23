@@ -1,0 +1,132 @@
+
+name: Personal Notes Manager CI/CD
+
+on:
+  push:
+    branches:
+      - sivakumarreddy
+
+  workflow_dispatch:
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./Backend
+          file: ./Backend/dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/personal-notes-manager:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/personal-notes-manager:${{ github.run_number }}
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+
+            IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/personal-notes-manager"
+            VERSION="${{ github.run_number }}"
+            APP="personal-notes-manager"
+            BACKUP="personal-notes-manager-backup"
+            DB_DIR="/home/ubuntu/notes-data"
+
+            sudo systemctl enable --now docker
+            sudo mkdir -p "$DB_DIR"
+
+            # Pull the new image first.
+            sudo docker pull "$IMAGE:$VERSION"
+
+            # Preserve the latest database from the old container.
+            if sudo docker container inspect recursing_swirles >/dev/null 2>&1; then
+              sudo docker exec recursing_swirles python -c \
+                'import sqlite3; a=sqlite3.connect("/app/notes.db"); b=sqlite3.connect("/tmp/notes-backup.db"); a.backup(b); b.close(); a.close()'
+
+              sudo docker cp recursing_swirles:/tmp/notes-backup.db "$DB_DIR/notes.db"
+              sudo docker exec recursing_swirles rm -f /tmp/notes-backup.db
+            fi
+
+            # Avoid overwriting an existing backup.
+            if sudo docker container inspect "$BACKUP" >/dev/null 2>&1; then
+              echo "A backup container already exists. Stopping deployment."
+              exit 1
+            fi
+
+            # Preserve the old application.
+            if sudo docker container inspect "$APP" >/dev/null 2>&1; then
+              sudo docker stop "$APP"
+              sudo docker rename "$APP" "$BACKUP"
+            elif sudo docker container inspect recursing_swirles >/dev/null 2>&1; then
+              sudo docker stop recursing_swirles
+              sudo docker rename recursing_swirles "$BACKUP"
+            fi
+
+            # Start the new application.
+            if sudo docker run -d \
+              --name "$APP" \
+              --restart unless-stopped \
+              -p 8001:8001 \
+              -e DB_URL=sqlite:////app/data/notes.db \
+              -v "$DB_DIR:/app/data" \
+              "$IMAGE:$VERSION"; then
+
+              HEALTHY=false
+
+              # Wait up to 60 seconds for FastAPI.
+              for i in $(seq 1 12); do
+                if sudo docker exec "$APP" python -c \
+                  "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/openapi.json', timeout=3)" >/dev/null 2>&1; then
+                  HEALTHY=true
+                  break
+                fi
+                sleep 5
+              done
+
+              if [ "$HEALTHY" = true ]; then
+                echo "New application is healthy."
+
+                if sudo docker container inspect "$BACKUP" >/dev/null 2>&1; then
+                  sudo docker rm -f "$BACKUP"
+                fi
+              else
+                echo "Health check failed. Restoring old application."
+
+                sudo docker rm -f "$APP" || true
+
+                if sudo docker container inspect "$BACKUP" >/dev/null 2>&1; then
+                  sudo docker rename "$BACKUP" "$APP"
+                  sudo docker start "$APP"
+                fi
+
+                exit 1
+              fi
+
+            else
+              echo "Container startup failed. Restoring old application."
+              sudo docker rm -f "" || true
+
+              if sudo docker container inspect "$BACKUP" >/dev/null 2>&1; then
+                sudo docker rename "$BACKUP" "$APP"
+                sudo docker start "$APP"
+              fi
+
+              exit 1
+            fi
+
+            sudo docker ps --filter "name=$APP"
