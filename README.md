@@ -90,3 +90,15 @@ docker rm project-container
 API Documentation:
 
 http://127.0.0.1:8001/docs
+
+##  API Requirements
+
+The application must provide APIs for the following. Fill in the API contract for each row.
+
+| # | Description | Method | Endpoint | Path / Query Params | Request Body | Response Body | Status Codes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | Register a user | POST |/register |None |user-name, email, password | registered successfully |201, 409, 422 |
+| 2 | Login a user | POST|/Login |None | email, password |login successfully, access_token, refresh_token |200, 401 |
+| 3 | To validate refresh token |POST |/refresh |None |user_id, token_type | new access token|401 |
+| 4 | get all notes of that user | GET| /notes|None | access_token| None|200, 404 |
+| 5 | create new notes |POST | /notes|None | access_token|None | 200, 422|
