@@ -61,7 +61,7 @@ def home():
 
 
 #  Register user
-@app.post("/register", status_code=201)
+@app.post("/registeruser", status_code=201)
 def register(data: RegisterRequest):
 
     if not data.username.strip() or not data.password.strip():
