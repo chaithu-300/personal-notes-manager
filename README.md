@@ -3,6 +3,7 @@
 |---|---|---|---|---|---|
 | 6 | Aditya | B Chaitanya | siva reddy|[personal-notes-manager](https://github.com/chaithu-300/personal-notes-manager/blob/main/README.md) | http://13.232.121.64:8001/docs |
 
+# Backend Setup and Execution
 
 Open a terminal and navigate to the backend folder.
 
