@@ -8,7 +8,7 @@ from argon2.exceptions import VerifyMismatchError #pyright: ignore
 
 ph = PasswordHasher()
 
-DB_URL = "sqlite:////app/data/notes.db"
+DB_URL = "sqlite:///./notes.db"
 engine = create_engine(DB_URL)
 Base = declarative_base()
 
@@ -37,6 +37,8 @@ class Note(Base):
     title = Column(String)
     content = Column(String)
     created_at = Column(DateTime, default=datetime.now)
+
+Base.metadata.create_all(engine)
 
 
 def register_user(username, email, password):
@@ -79,7 +81,7 @@ def verify_login(email, password):
         return False
 
     try:
-        ph.verify(user.hashed_password, password)
+        ph.verify(str(user.hashed_password), password)
     except VerifyMismatchError:
         session.close()
         return False
@@ -192,4 +194,3 @@ def create_note(user_id, title, content):
 
     session.close()
     return response
-
