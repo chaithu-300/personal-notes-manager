@@ -24,17 +24,18 @@ function App() {
 
       <h1>Personal Notes Manager</h1>
 
-      {page === "register" && (
-        <Register
-          onRegisterSuccess={() => setPage("login")}
-        />
+      {page !== "dashboard" && (
+        <>
+          <Register
+            onRegisterSuccess={() => setPage("login")}
+          />
+
+          <Login
+            onLoginSuccess={() => setPage("dashboard")}
+          />
+        </>
       )}
 
-      {page === "login" && (
-        <Login
-          onLoginSuccess={() => setPage("dashboard")}
-        />
-      )}
 
       {page === "dashboard" && (
         <NotesDashboard

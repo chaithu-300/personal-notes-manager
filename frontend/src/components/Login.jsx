@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { loginUser } from "../services/api";
 
 function Login({ onLoginSuccess }) {
 
@@ -15,20 +14,37 @@ function Login({ onLoginSuccess }) {
       return;
     }
 
-    loginUser(email, password)
-  .then((data) => {
-    // Store JWT tokens
-    localStorage.setItem("access_token", data.access_token);
-    localStorage.setItem("refresh_token", data.refresh_token);
+    try {
 
-    setMessage("Login successful!");
-    onLoginSuccess();
-  })
-  .catch((error) => {
-    setMessage(error.message);
-  });
-}
-  
+      const response = await fetch("http://127.0.0.1:8001/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Login failed");
+      }
+
+      // Store JWT tokens
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("refresh_token", data.refresh_token);
+
+      setMessage("Login successful!");
+
+      onLoginSuccess();
+
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
 
   return (
     <div className="container">

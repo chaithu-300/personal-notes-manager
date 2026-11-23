@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { registerUser } from "../services/api";
 
 function Register({ onRegisterSuccess }) {
 
@@ -16,17 +15,37 @@ function Register({ onRegisterSuccess }) {
       return;
     }
 
-     registerUser(username, email, password)
-      .then(() => {
-        setMessage("You registered successfully!");
-        setUsername("");
-        setEmail("");
-        setPassword("");
-        onRegisterSuccess();
-      })
-      .catch((error) => {
-        setMessage(error.message);
+    try {
+
+      const response = await fetch("http://127.0.0.1:8001/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username: username,
+          email: email,
+          password: password
+        })
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Registration failed");
+      }
+
+      setMessage("You registered successfully!");
+
+      setUsername("");
+      setEmail("");
+      setPassword("");
+
+      onRegisterSuccess();
+
+    } catch (error) {
+      setMessage(error.message);
+    }
   }
 
   return (
