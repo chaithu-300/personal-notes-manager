@@ -105,5 +105,6 @@ The application must provide APIs for the following. Fill in the API contract fo
 
 | Table | Columns |
 |---|---|---|---|---|---|
+|---|---|---|---|---|---|
 | User |  |
 | notes|  |
