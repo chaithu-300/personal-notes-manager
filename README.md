@@ -102,3 +102,8 @@ The application must provide APIs for the following. Fill in the API contract fo
 | 3 | To validate refresh token |POST |/refresh |None |user_id, token_type | new access token|401 |
 | 4 | get all notes of that user | GET| /notes|None | access_token| None|200, 404 |
 | 5 | create new notes |POST | /notes|None | access_token|None | 200, 422|
+
+| Table | Columns |
+|---|---|---|---|---|---|
+| User |  |
+| notes|  |
